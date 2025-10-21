@@ -15,13 +15,15 @@ async function bootstrap() {
   }));
   app.enableCors({ origin: '*' });
 
-  const config = new DocumentBuilder()
-    .addBearerAuth()  
-    .setTitle('MyJapan APIs')
-    .setVersion('1.0')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .addBearerAuth()
+      .setTitle('MyJapan APIs')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   await app.listen(process.env.PORT || 8080, '0.0.0.0');
 }
