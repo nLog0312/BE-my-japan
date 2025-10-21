@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MyJapan アクティベーションメール</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@100..700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes aura {
+            0% {
+                background-position: center, 50% 50%, 30% 100%, 100% 10%, 23% 23%, 0% 80%;
+            }
+            33.333% {
+                background-position: center, 10% 75%, 40% 80%, 60% 20%, 43% 23%, 16% 30%;
+            }
+            66.666% {
+                background-position: center, 25% 35%, 80% 50%, 10% 10%, 66% 5%, 30% 0%;
+            }
+            100% {
+                background-position: center, 50% 50%, 30% 100%, 100% 10%, 23% 23%, 0% 80%;
+            }
+        }
+    </style>
+</head>
+
+<body
+    style="margin: 0; padding: 0; min-width: 100%; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5; background-color: #FAFAFA; color: #222222;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div style="background: #181818;
+                    text-align: center;
+                    color: white;
+                    text-shadow: 0 0 1ch cyan, 0 0 4ch magenta;
+                    animation: aura 10s linear infinite;
+                    background-size: 200% 200%;
+                    background-image: radial-gradient(transparent 0, transparent 20%),
+                    radial-gradient(at 62% 9%, chartreuse 0px, transparent 50%),
+                    radial-gradient(at 69% 60%, magenta 0px, transparent 50%),
+                    radial-gradient(at 24% 89%, cyan 0px, transparent 50%),
+                    radial-gradient(at 51% 77%, black 0px, transparent 50%),
+                    radial-gradient(at 78% 92%, chartreuse 0px, transparent 50%);
+                    padding: 24px; color: #ffffff;">
+            <h1
+                style="font-size: 24px; font-weight: 700; line-height: 1.25; margin-top: 0; margin-bottom: 15px; text-align: center; font-family: 'M PLUS 1 Code', monospace; font-optical-sizing: auto;">
+                MyJapanへようこそ</h1>
+        </div>
+        <div style="padding: 24px; background-color: #ffffff;">
+            <p style="margin-top: 0; margin-bottom: 24px;">{{name}} 様</p>
+            <p style="margin-top: 0; margin-bottom: 24px;">MyJapanにご登録いただきありがとうございます。アカウントのメールアドレスを有効化するために、以下の認証コードをご利用ください。</p>
+            <h2
+                style="font-size: 20px; font-weight: 700; line-height: 1.25; margin-top: 0; margin-bottom: 15px; text-align: center;">
+                {{activation_code}}</h2>
+            <p style="margin-top: 0; margin-bottom: 24px;">この認証コードは5分間のみ有効です。</p>
+            <p style="margin-top: 0; margin-bottom: 24px;">もしMyJapanでアカウントを作成していない場合は、このメールを無視してください。</p>
+        </div>
+        <div style="background-color: #f6f6f6; padding: 24px;">
+            <p style="margin-top: 0; margin-bottom: 24px;">
+                ご不明な点がございましたら、こちらまでご連絡ください: 
+                <a href="https://www.facebook.com/nlog0312" target="_blank"
+                    style="color: #000; text-decoration:none;">@nlog0312
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
