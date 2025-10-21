@@ -1,15 +1,14 @@
-# fly.toml app configuration file generated for my-japan on 2025-10-21T00:42:35Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
-app = 'my-japan'
-primary_region = 'iad'
+app = "my-japan"
+primary_region = "nrt"
 
 [build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

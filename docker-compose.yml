@@ -1,15 +1,19 @@
-services:
-  mongodb:
-    image: mongo:5.0.15
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: 123456
-    ports:
-      - 27017:27017
-    volumes:
-      - mongodb_data_container:/data/db
+# # ---- BUILD STAGE ----
+FROM node:20-alpine AS builder
 
-volumes:
-  mongodb_data_container:
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-    # docker compose -p hoidanit-mongodb-4rn up -d
+FROM node:20-alpine
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+RUN npm install --only=production
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE process.env.PORT || 8080
+CMD ["node", "dist/main.js"]
