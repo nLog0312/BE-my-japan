@@ -102,17 +102,19 @@ export class WorkLogsService {
     const dt = this.parseDate(today.toISO(), TZ)
     const dayKey = dt.toFormat('yyyy-LL-dd');
     for (const user of users) {
-      const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
-      const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
-
-      createWorkLogDto.user_id = user._id;
-      createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
-      createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
-
-      createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
-      createWorkLogDto.dayKey = dayKey;
-
-      const workLog = await this.workLogModel.create({...createWorkLogDto, dayKey});
+      if (user.setup_worklog.auto) {
+        const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
+        const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
+  
+        createWorkLogDto.user_id = user._id;
+        createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
+        createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
+  
+        createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
+        createWorkLogDto.dayKey = dayKey;
+  
+        const workLog = await this.workLogModel.create({...createWorkLogDto, dayKey});
+      }
     }
   }
 

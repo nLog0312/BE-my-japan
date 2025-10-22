@@ -25,6 +25,7 @@ export class User {
     code_expired?: string;
     @Prop({
         type: {
+            auto: { type: Boolean },
             start_time: { type: String },
             end_time: { type: String },
             hourly_rate: { type: Number },
@@ -32,6 +33,7 @@ export class User {
         default: {},
     })
     setup_worklog?: {
+        auto?: boolean;
         start_time?: string;
         end_time?: string;
         hourly_rate?: number;

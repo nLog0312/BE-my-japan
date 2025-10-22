@@ -11,4 +11,11 @@ export class UpdateUserDto {
     currency: string;
     @IsOptional()
     locale: string;
+    @IsOptional()
+    setup_worklog?: {
+        auto?: boolean;
+        start_time?: string;
+        end_time?: string;
+        hourly_rate?: number;
+    };
 }
