@@ -90,6 +90,32 @@ export class WorkLogsService {
     }
   }
 
+  async addDailyRecordsForAllUsers() {
+    const users = await this.userModel.find();
+    let createWorkLogDto: any = {
+      break_minutes: 60,
+      regular_hours: 8
+    }
+
+    const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();;
+    const today = DateTime.now().setZone(TZ).startOf('day');
+    const dt = this.parseDate(today.toISO(), TZ)
+    const dayKey = dt.toFormat('yyyy-LL-dd');
+    for (const user of users) {
+      const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
+      const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
+
+      createWorkLogDto.user_id = user._id;
+      createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
+      createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
+
+      createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
+      createWorkLogDto.dayKey = dayKey;
+
+      const workLog = await this.workLogModel.create({...createWorkLogDto, dayKey});
+    }
+  }
+
   // day=2025-10-18
   // month=2025-10
   // year=2025

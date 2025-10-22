@@ -1,7 +1,6 @@
 import { User } from '@/modules/users/schemas/user.schema';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Date, HydratedDocument } from 'mongoose';
-import { DateTime } from 'luxon';
 
 export type WorkLogDocument = HydratedDocument<WorkLog>;
 
@@ -34,4 +33,4 @@ export class WorkLog {
 
 export const WorkLogSchema = SchemaFactory.createForClass(WorkLog);
 
-WorkLogSchema.index({ user: 1, dayKey: 1 }, { unique: true });
+WorkLogSchema.index({ user_id: 1, dayKey: 1 }, { unique: true });

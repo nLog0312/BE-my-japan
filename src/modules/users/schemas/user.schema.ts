@@ -23,6 +23,19 @@ export class User {
     code_id?: string;
     @Prop()
     code_expired?: string;
+    @Prop({
+        type: {
+            start_time: { type: String },
+            end_time: { type: String },
+            hourly_rate: { type: Number },
+        },
+        default: {},
+    })
+    setup_worklog?: {
+        start_time?: string;
+        end_time?: string;
+        hourly_rate?: number;
+    };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

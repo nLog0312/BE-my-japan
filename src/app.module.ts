@@ -6,13 +6,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from '@/modules/users/users.module';
 import { WorkLogsModule } from '@/modules/work.logs/work.logs.module';
 import { MonthlySheetsModule } from '@/modules/monthly.sheets/monthly.sheets.module';
-// import { MonthlyItemsModule } from '@/modules/monthly.items/monthly.items.module';
 import { TodosModule } from '@/modules/todos/todos.module';
 import { AuthModule } from '@/auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -27,7 +27,6 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     UsersModule,
     WorkLogsModule,
     MonthlySheetsModule,
-    // MonthlyItemsModule,
     TodosModule,
     AuthModule,
     MailerModule.forRootAsync({
@@ -57,6 +56,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
       }),
       inject: [ConfigService],
     }),
+    JobsModule
   ],
   controllers: [AppController],
   providers: [
@@ -65,6 +65,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    JobsModule,
 ],
 })
 export class AppModule {}

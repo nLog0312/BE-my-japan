@@ -12,5 +12,6 @@ import { UsersModule } from '../users/users.module';
   ],
   controllers: [WorkLogsController],
   providers: [WorkLogsService],
+  exports: [WorkLogsService],
 })
 export class WorkLogsModule {}
