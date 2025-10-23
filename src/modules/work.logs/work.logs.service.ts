@@ -112,8 +112,9 @@ export class WorkLogsService {
   
         createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
         createWorkLogDto.dayKey = dayKey;
-  
-        const workLog = await this.workLogModel.create({...createWorkLogDto, dayKey});
+        console.log(createWorkLogDto);
+        
+        // const workLog = await this.workLogModel.create({...createWorkLogDto});
       }
     }
   }

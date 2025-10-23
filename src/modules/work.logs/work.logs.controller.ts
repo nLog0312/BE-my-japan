@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ValidationPipe, HttpCode } from '@nestjs/common';
 import { WorkLogsService } from './work.logs.service';
 import { CreateWorkLogDto } from './dto/create-work.log.dto';
 import { UpdateWorkLogDto } from './dto/update-work.log.dto';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { ResponseDto } from '@/helpers/util';
 import { WorkLogQueryDto } from './dto/worklog.dto';
 
@@ -16,15 +16,18 @@ export class WorkLogsController {
     return this.workLogsService.create(createWorkLogDto);
   }
 
-  @Get('get-all')
+  @Post('get-all')
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
-  findAll(@Query(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  })) query: WorkLogQueryDto,
+  @ApiBody({ type: WorkLogQueryDto })
+  findAll(
+    @Body(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    })) body: WorkLogQueryDto,
   ) {
-    return this.workLogsService.findAll(query, +query.current, +query.pageSize);
+    return this.workLogsService.findAll(body, +body.current, +body.pageSize);
   }
 
   @Get('get-one/:id')

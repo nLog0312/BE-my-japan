@@ -8,7 +8,8 @@ export class WorkLogJobService {
 
     constructor(private readonly WorkLogService: WorkLogsService) {}
 
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    @Cron(CronExpression.EVERY_5_SECONDS)
     async handleCreateWorkLogDaily() {
         const today = new Date().getDay();
         if (today === 0 || today === 6) {
