@@ -14,8 +14,6 @@ export class User {
     @Prop()
     name: string;
     @Prop()
-    currency: string;
-    @Prop()
     locale: string;
     @Prop({ default: false })
     is_active_email?: boolean;

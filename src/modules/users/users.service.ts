@@ -12,6 +12,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordDto, FindUserDto } from './dto/user.dto';
 import { plainToInstance } from 'class-transformer';
+import { deepMerge } from '@/helpers/deep-merge.util';
 
 @Injectable()
 export class UsersService {
@@ -52,7 +53,7 @@ export class UsersService {
   
   async register(createUserDto: CreateUserDto): Promise<ResponseDto> {
     try {
-      const { user_name, email, password, name, currency, locale } = createUserDto;
+      const { user_name, email, password, name, locale } = createUserDto;
       
       // check mail
       if (email) {
@@ -76,7 +77,7 @@ export class UsersService {
       const password_hash = await hashPasswordHelper(password);
 
       let registerUser: User = {
-        user_name, email, password_hash, name, currency, locale
+        user_name, email, password_hash, name, locale
       };
 
       const code_id = uuidv4();
@@ -179,7 +180,6 @@ export class UsersService {
     }
 
     try {
-      // check mail
       if (patch.email) {
         const isExistEmail = await this.userModel.exists({
           email: patch.email,
@@ -193,16 +193,19 @@ export class UsersService {
           };
         }
       }
-      
-      const user = await this.userModel.findByIdAndUpdate(
-        _id,
-        { $set: patch },
-        { new: true, runValidators: true }
-      );
 
-      if (!user) {
+      const currentUser = await this.userModel.findById(_id);
+      if (!currentUser) {
         return { message: 'Không tìm thấy người dùng.', statusCode: 404 };
       }
+
+      const merged = deepMerge(currentUser.toObject(), patch);
+
+      const user = await this.userModel.findByIdAndUpdate(
+        _id,
+        { $set: merged },
+        { new: true, runValidators: true }
+      );
 
       const payload = { sub: user._id, username: user.user_name, name: user.name };
       const access_token = this.jwtService.sign(payload);
@@ -210,9 +213,7 @@ export class UsersService {
       return {
         message: 'Sửa thông tin thành công.',
         statusCode: 200,
-        data: {
-          access_token,
-        },
+        data: { access_token },
       };
     } catch (error) {
       return {

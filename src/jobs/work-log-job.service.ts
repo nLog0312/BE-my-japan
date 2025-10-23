@@ -10,6 +10,10 @@ export class WorkLogJobService {
 
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleCreateWorkLogDaily() {
+        const today = new Date().getDay();
+        if (today === 0 || today === 6) {
+            return;
+        }
         try {
             this.logger.log('Running daily WorkLog job...');
             await this.WorkLogService.addDailyRecordsForAllUsers();

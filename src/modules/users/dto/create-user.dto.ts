@@ -9,8 +9,6 @@ export class CreateUserDto {
     email: string;
     @IsOptional()
     name: string;
-    @IsNotEmpty({ message: 'Loại tiền tệ không được để trống.' })
-    currency: string;
     @IsOptional()
     locale: string;
 }

@@ -17,8 +17,6 @@ export class AuthDto {
     email: string;
     @IsOptional()
     name: string;
-    @IsNotEmpty({ message: 'Loại tiền tệ không được để trống.' })
-    currency: string;
     @IsOptional()
     locale: string;
     is_active_email: boolean;

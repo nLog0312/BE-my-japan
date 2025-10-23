@@ -1,4 +1,4 @@
-import { Expose } from "class-transformer";
+import { Expose, Type } from "class-transformer";
 import { IsNotEmpty, IsOptional } from "class-validator";
 
 export class ChangePasswordDto {
@@ -8,6 +8,24 @@ export class ChangePasswordDto {
     old_password: string;
     @IsNotEmpty({ message: 'Pasword không được để trống.' })
     new_password: string;
+}
+
+export class SetupWorklogDto {
+    @Expose()
+    @IsOptional()
+    auto: boolean;
+
+    @Expose()
+    @IsOptional()
+    start_time: string;
+
+    @Expose()
+    @IsOptional()
+    end_time: string;
+
+    @Expose()
+    @IsOptional()
+    hourly_rate: number;
 }
 
 export class FindUserDto {
@@ -21,9 +39,12 @@ export class FindUserDto {
     @Expose()
     is_active_email: boolean;
     @IsOptional()
-    @Expose()
-    currency: string;
     @IsOptional()
     @Expose()
     locale: string;
+
+    @IsOptional()
+    @Expose()
+    @Type(() => SetupWorklogDto)
+    setup_worklog: SetupWorklogDto;
 }

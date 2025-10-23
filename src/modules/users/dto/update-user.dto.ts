@@ -1,4 +1,20 @@
+import { Type } from "class-transformer";
 import { IsNotEmpty, IsOptional } from "class-validator";
+
+
+export class SetupWorklogDto {
+    @IsOptional()
+    auto: boolean;
+
+    @IsOptional()
+    start_time: string;
+
+    @IsOptional()
+    end_time: string;
+
+    @IsOptional()
+    hourly_rate: number;
+}
 
 export class UpdateUserDto {
     @IsNotEmpty({ message: 'Id không được để trống.' })
@@ -8,14 +24,8 @@ export class UpdateUserDto {
     @IsOptional()
     email: string;
     @IsOptional()
-    currency: string;
-    @IsOptional()
     locale: string;
     @IsOptional()
-    setup_worklog?: {
-        auto?: boolean;
-        start_time?: string;
-        end_time?: string;
-        hourly_rate?: number;
-    };
+    @Type(() => SetupWorklogDto)
+    setup_worklog?: SetupWorklogDto;
 }
