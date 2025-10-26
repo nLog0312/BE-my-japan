@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as dayjs from 'dayjs'
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
-import { ChangePasswordDto, FindUserDto } from './dto/user.dto';
+import { ChangePasswordDto, SetupWorklogDto, FindUserDto } from './dto/user.dto';
 import { plainToInstance } from 'class-transformer';
 import { deepMerge } from '@/helpers/deep-merge.util';
 
@@ -163,6 +163,22 @@ export class UsersService {
         message: 'Lấy thông tin người dùng thành công.',
         statusCode: 200,
         data: plainToInstance(FindUserDto, user, { excludeExtraneousValues: true }),
+      };
+    } catch (error) {
+      return {
+        message: `Lỗi: ${error?.message ?? error}`,
+        statusCode: 500,
+      };
+    }
+  }
+
+  async findSetupWorklogById(id: string): Promise<ResponseDto<SetupWorklogDto>> {
+    try {
+      const user = await this.userModel.findOne({ _id: id });
+      return {
+        message: 'Lấy thông tin setup thành công.',
+        statusCode: 200,
+        data: plainToInstance(SetupWorklogDto, user?.setup_worklog, { excludeExtraneousValues: true }),
       };
     } catch (error) {
       return {

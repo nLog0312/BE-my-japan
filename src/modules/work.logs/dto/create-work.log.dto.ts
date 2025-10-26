@@ -13,8 +13,8 @@ export class CreateWorkLogDto {
     break_minutes: number;
     @IsNotEmpty({ message: 'Tiền theo giờ không được để trống.' })
     hourly_rate: number;
-    @IsNotEmpty({ message: 'Số giờ thường không được để trống.' })
-    regular_hours: number;
+    @IsOptional()
+    regular_hours: number = 0;
     @IsOptional()
     is_overtime?: boolean = false;
     @IsOptional()

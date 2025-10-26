@@ -11,6 +11,7 @@ export class WorkLogsController {
   constructor(private readonly workLogsService: WorkLogsService) {}
 
   @Post()
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
   create(@Body() createWorkLogDto: CreateWorkLogDto) {
     return this.workLogsService.create(createWorkLogDto);
@@ -31,18 +32,22 @@ export class WorkLogsController {
   }
 
   @Get('get-one/:id')
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
   findOne(@Param('id') id: string) {
     return this.workLogsService.findOneById(id);
   }
 
   @Patch('update-work-log')
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
   async update(@Body() updateWorkLogDto: UpdateWorkLogDto) {
     return await this.workLogsService.update(updateWorkLogDto);
   }
 
   @Delete('delete-work-log/:id')
+  @HttpCode(200)
+  @ApiOkResponse({ type: ResponseDto })
   remove(@Param('id') id: string): Promise<ResponseDto> {
     return this.workLogsService.remove(id);
   }

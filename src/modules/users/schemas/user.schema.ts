@@ -27,6 +27,7 @@ export class User {
             start_time: { type: String },
             end_time: { type: String },
             hourly_rate: { type: Number },
+            overtime_multiplier: { type: Number },
         },
         default: {},
     })
@@ -35,6 +36,7 @@ export class User {
         start_time?: string;
         end_time?: string;
         hourly_rate?: number;
+        overtime_multiplier?: number;
     };
 }
 

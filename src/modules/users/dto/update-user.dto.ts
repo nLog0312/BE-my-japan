@@ -14,6 +14,9 @@ export class SetupWorklogDto {
 
     @IsOptional()
     hourly_rate: number;
+
+    @IsOptional()
+    overtime_multiplier: number;
 }
 
 export class UpdateUserDto {

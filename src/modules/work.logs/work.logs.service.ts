@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWorkLogDto } from './dto/create-work.log.dto';
 import { UpdateWorkLogDto } from './dto/update-work.log.dto';
 import { dayRangeISO, fromToISO, monthRangeISO, ResponseDto, yearRangeISO } from '@/helpers/util';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { WorkLog, WorkLogDocument } from './schemas/work.log.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
@@ -67,7 +67,7 @@ export class WorkLogsService {
       if(!user)
         return { message: "Không tìm thấy tài khoản nào hiện đang được đăng nhập. Xin hãy đăng nhập lại!", statusCode: 400 };
 
-      const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();;
+      const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();
       
       const dt = this.parseDate(createWorkLogDto.start_time ?? createWorkLogDto.start_time, TZ)
       const dayKey = dt.toFormat('yyyy-LL-dd');
@@ -124,12 +124,13 @@ export class WorkLogsService {
   // from=2025-10-01&to=2025-10-18
   async findAll(rawQuery, current: number, pageSize: number): Promise<ResponseDto> {
     try {
-      const { filter, sort } = aqp(rawQuery);
-  
+      let { filter, sort } = aqp(rawQuery);
+      if (!sort) sort = { createdAt: -1 };
+
       const { day, month, year, from, to } = (rawQuery || {}) as {
         day?: string; month?: string; year?: string; from?: string; to?: string;
       };
-  
+
       delete filter.current;
       delete filter.pageSize;
       delete filter.day;
@@ -137,16 +138,16 @@ export class WorkLogsService {
       delete filter.year;
       delete filter.from;
       delete filter.to;
-  
+
       if (!current) current = 1;
       if (!pageSize) pageSize = 10;
-  
+
       let dkRange: { start: string; end: string } | null = null;
       if (day)        dkRange = dayRangeISO(day);
-      else if (month) dkRange = monthRangeISO(month);    // "YYYY-MM"
-      else if (year)  dkRange = yearRangeISO(year);      // "YYYY"
-      else if (from && to) dkRange = fromToISO(from, to);// "YYYY-MM-DD"
-  
+      else if (month) dkRange = monthRangeISO(month);
+      else if (year)  dkRange = yearRangeISO(year);
+      else if (from && to) dkRange = fromToISO(from, to);
+
       let where: any = { ...filter };
       if (dkRange && !day) {
         where.dayKey = { $gte: dkRange.start, $lte: dkRange.end };
@@ -154,28 +155,97 @@ export class WorkLogsService {
       if (dkRange && day) {
         where.dayKey = { $gte: dkRange.start, $lt: dkRange.end };
       }
-  
-      const totalItems = await this.workLogModel.countDocuments(where);
-      const totalPages = Math.ceil(totalItems / pageSize);
+      if (where.user_id && typeof where.user_id === 'string') {
+        where.user_id = new Types.ObjectId(where.user_id);
+      }
+
       const skip = (current - 1) * pageSize;
-  
-      const results = await this.workLogModel
-        .find(where)
-        .limit(pageSize)
-        .skip(skip)
-        .select('-dayKey -__v')
-        .sort(sort as any)
-        .lean();
-  
+      
+      const [totalItems, results, totalsAgg] = await Promise.all([
+        this.workLogModel.countDocuments(where),
+        this.workLogModel
+          .find(where)
+          .limit(pageSize)
+          .skip(skip)
+          .select('-user_id -dayKey -updatedAt -createdAt -__v')
+          .sort(sort as any)
+          .lean(),
+        this.workLogModel.aggregate([
+          { $match: where },
+          {
+            $project: {
+              hourly_rate: { $toDouble: { $ifNull: ['$hourly_rate', 0] } },
+              regular_hours: { $toDouble: { $ifNull: ['$regular_hours', 0] } },
+              overtime_hours: { $toDouble: { $ifNull: ['$overtime_hours', 0] } },
+              overtime_multiplier: { $toDouble: { $ifNull: ['$overtime_multiplier', 1.25] } },
+              // nếu thiếu hoặc null thì fallback về false
+              is_overtime: {
+                $cond: [
+                  { $eq: ['$is_overtime', true] },
+                  true,
+                  false
+                ]
+              }
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total_salary_regular: {
+                $sum: { $multiply: ['$hourly_rate', '$regular_hours'] }
+              },
+              total_salary_overtime: {
+                $sum: {
+                  $cond: [
+                    '$is_overtime',
+                    { $multiply: ['$hourly_rate', '$overtime_hours', '$overtime_multiplier'] },
+                    0
+                  ]
+                }
+              },
+              total_overtime_hours: { $sum: '$overtime_hours' },
+              total_regulartime_hours: { $sum: '$regular_hours' },
+            }
+          },
+          { $project: { _id: 0 } }
+        ]),
+      ]);
+
+      const total_pages = Math.ceil(totalItems / pageSize);
+
+      const totals =
+        (Array.isArray(totalsAgg) && totalsAgg.length > 0 && totalsAgg[0]) || {
+          total_salary_regular: 0,
+          total_salary_overtime: 0,
+          total_overtime_hours: 0,
+          total_regulartime_hours: 0,
+        };
+
+      const total_salary =
+        (totals.total_salary_regular ?? 0) + (totals.total_salary_overtime ?? 0);
+
       return {
         message: 'Lấy thông tin giờ làm thành công',
         statusCode: 200,
-        data: { results, totalPages },
+        data: {
+          results,
+          total_pages,
+          total_salary,
+          total_salary_regular: totals.total_salary_regular ?? 0,
+          total_salary_overtime: totals.total_salary_overtime ?? 0,
+          total_overtime_hours: totals.total_overtime_hours ?? 0,
+          total_regulartime_hours: totals.total_regulartime_hours ?? 0,
+        },
       };
     } catch (error) {
-      return { message: error.message || 'Internal error', statusCode: 400, data: null };
+      return {
+        message: error.message || 'Internal error',
+        statusCode: 400,
+        data: null,
+      };
     }
   }
+
 
   //#region Update
   toYMD(d: Date) {

@@ -26,6 +26,10 @@ export class SetupWorklogDto {
     @Expose()
     @IsOptional()
     hourly_rate: number;
+
+    @Expose()
+    @IsOptional()
+    overtime_multiplier: number;
 }
 
 export class FindUserDto {
@@ -48,3 +52,10 @@ export class FindUserDto {
     @Type(() => SetupWorklogDto)
     setup_worklog: SetupWorklogDto;
 }
+
+// export class FindSetupWorklogDto {
+//     @IsOptional()
+//     @Expose()
+//     @Type(() => SetupWorklogDto)
+//     setup_worklog: SetupWorklogDto;
+// }

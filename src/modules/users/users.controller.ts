@@ -4,7 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOkResponse, ApiParam } from '@nestjs/swagger';
 import { ResponseDto } from '@/helpers/util';
-import { ChangePasswordDto, FindUserDto } from './dto/user.dto';
+import { ChangePasswordDto, SetupWorklogDto, FindUserDto } from './dto/user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,6 +29,13 @@ export class UsersController {
   @ApiOkResponse({ type: ResponseDto<FindUserDto> })
   async findOne(@Param('id') id: string): Promise<ResponseDto<FindUserDto>> {
     return await this.usersService.findOneById(id);
+  }
+
+  @Get('get-setup-worklog/:id')
+  @ApiParam({ name: 'id', required: true, type: String })
+  @ApiOkResponse({ type: ResponseDto<SetupWorklogDto> })
+  async findSetupWorklogById(@Param('id') id: string): Promise<ResponseDto<SetupWorklogDto>> {
+    return await this.usersService.findSetupWorklogById(id);
   }
 
   @Patch('update-user-information')

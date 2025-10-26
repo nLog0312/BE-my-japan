@@ -16,7 +16,7 @@ export class WorkLog {
     break_minutes: number;
     @Prop({ default: 0 })
     hourly_rate: number;
-    @Prop({ default: 8 })
+    @Prop({ default: 0 })
     regular_hours: number;
     @Prop({ default: 0 })
     overtime_hours: number;
