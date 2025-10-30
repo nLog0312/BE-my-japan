@@ -17,7 +17,7 @@ export class WorkLogsController {
     return this.workLogsService.create(createWorkLogDto);
   }
 
-  @Post('run-daily-add-worklog')
+  @Get('run-daily-add-worklog')
   addDailyRecordsForAllUsers() {
     return this.workLogsService.addDailyRecordsForAllUsers();
   }
