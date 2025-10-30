@@ -15,8 +15,7 @@ export class WorkLogsService {
   constructor(
     @InjectModel(WorkLog.name) private readonly workLogModel: Model<WorkLogDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly configService: ConfigService,
-    private readonly logger = new Logger(WorkLogsService.name),
+    private readonly configService: ConfigService
   ) {}
 
   private parseDate(time: unknown, tz: string): DateTime {
@@ -92,41 +91,34 @@ export class WorkLogsService {
   }
 
   async addDailyRecordsForAllUsers() {
-    this.logger.log('Running daily WorkLog job...');
     const todayCheck = new Date().getDay();
     if (todayCheck === 0 || todayCheck === 6) {
-      this.logger.log('Today not working...');
       return;
     }
-    try {
-      const users = await this.userModel.find();
-      let createWorkLogDto: any = {
-        break_minutes: 60,
-        regular_hours: 8
-      }
+    const users = await this.userModel.find();
+    let createWorkLogDto: any = {
+      break_minutes: 60,
+      regular_hours: 8
+    }
 
-      const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();;
-      const today = DateTime.now().setZone(TZ).startOf('day');
-      const dt = this.parseDate(today.toISO(), TZ)
-      const dayKey = dt.toFormat('yyyy-LL-dd');
-      for (const user of users) {
-        if (user.setup_worklog.auto) {
-          const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
-          const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
-    
-          createWorkLogDto.user_id = user._id;
-          createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
-          createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
-    
-          createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
-          createWorkLogDto.dayKey = dayKey;
-          
-          const workLog = await this.workLogModel.create({...createWorkLogDto});
-        }
+    const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();;
+    const today = DateTime.now().setZone(TZ).startOf('day');
+    const dt = this.parseDate(today.toISO(), TZ)
+    const dayKey = dt.toFormat('yyyy-LL-dd');
+    for (const user of users) {
+      if (user.setup_worklog.auto) {
+        const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
+        const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
+  
+        createWorkLogDto.user_id = user._id;
+        createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
+        createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
+  
+        createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
+        createWorkLogDto.dayKey = dayKey;
+        
+        const workLog = await this.workLogModel.create({...createWorkLogDto});
       }
-      this.logger.log('✅ WorkLog record created successfully');
-    } catch (error) {
-      this.logger.log(`WorkLog record created error: ${error}`);
     }
   }
 
