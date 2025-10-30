@@ -125,7 +125,7 @@ export class WorkLogsService {
   async findAll(rawQuery, current: number, pageSize: number): Promise<ResponseDto> {
     try {
       let { filter, sort } = aqp(rawQuery);
-      if (!sort) sort = { createdAt: -1 };
+      if (!sort) sort = { dayKey: -1 };
 
       const { day, month, year, from, to } = (rawQuery || {}) as {
         day?: string; month?: string; year?: string; from?: string; to?: string;
