@@ -12,7 +12,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { JobsModule } from './jobs/jobs.module';
+// import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -56,7 +56,7 @@ import { JobsModule } from './jobs/jobs.module';
       }),
       inject: [ConfigService],
     }),
-    JobsModule
+    // JobsModule
   ],
   controllers: [AppController],
   providers: [
@@ -65,7 +65,7 @@ import { JobsModule } from './jobs/jobs.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    JobsModule,
+    // JobsModule,
 ],
 })
 export class AppModule {}

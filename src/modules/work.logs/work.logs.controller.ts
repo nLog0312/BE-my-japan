@@ -17,6 +17,11 @@ export class WorkLogsController {
     return this.workLogsService.create(createWorkLogDto);
   }
 
+  @Post('run-daily-add-worklog')
+  addDailyRecordsForAllUsers() {
+    return this.workLogsService.addDailyRecordsForAllUsers();
+  }
+
   @Post('get-all')
   @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
