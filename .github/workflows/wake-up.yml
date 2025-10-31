@@ -1,0 +1,20 @@
+name: Wake Up Render App
+
+on:
+  schedule:
+    - cron: "55 14 * * *"
+
+jobs:
+  wake_up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake up Render app before midnight job
+        run: |
+          echo "Pinging Render app to wake it up before midnight..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/health)
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ App responded with 200 OK"
+          else
+            echo "⚠️ App did not respond (HTTP $RESPONSE)"
+            exit 1
+          fi
