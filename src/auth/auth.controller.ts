@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, HttpCode, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public } from '@/decorator/customize';
@@ -28,5 +28,11 @@ export class AuthController {
   @Public()
   async register(@Body() registerDto: AuthDto) {
     return await this.authService.register(registerDto);
+  }
+
+  @Get('health')
+  @Public()
+  check() {
+    return { status: 'ok', time: new Date().toISOString() };
   }
 }
