@@ -59,4 +59,4 @@ jobs:
             echo "$BODY"
             echo "."
             echo "QUIT"
-          } | openssl s_client -starttls smtp -crlf -quiet -connect smtp.gmail.com:587
+          } | openssl s_client -starttls smtp -crlf -quiet -connect smtp.gmail.com:587 2>/dev/null
