@@ -44,6 +44,8 @@ jobs:
 
           {
             echo "EHLO localhost"
+            echo "STARTTLS"
+            sleep 1
             echo "AUTH LOGIN"
             echo "$AUTH_USER"
             echo "$AUTH_PASS"
@@ -57,4 +59,4 @@ jobs:
             echo "$BODY"
             echo "."
             echo "QUIT"
-          } | nc -v -i 1 smtp.gmail.com 587
+          } | openssl s_client -starttls smtp -crlf -quiet -connect smtp.gmail.com:587
