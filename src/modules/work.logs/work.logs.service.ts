@@ -9,6 +9,14 @@ import { User, UserDocument } from '../users/schemas/user.schema';
 import { DateTime } from 'luxon';
 import { ConfigService } from '@nestjs/config';
 import aqp from 'api-query-params';
+import * as dayjsLib from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
+import * as timezone from 'dayjs/plugin/timezone';
+
+const dayjs = (dayjsLib as any).default || dayjsLib;
+dayjs.extend((utc as any).default || utc);
+dayjs.extend((timezone as any).default || timezone);
+
 
 @Injectable()
 export class WorkLogsService {
@@ -60,18 +68,27 @@ export class WorkLogsService {
   async create(createWorkLogDto: CreateWorkLogDto): Promise<ResponseDto> {
     if (!mongoose.isValidObjectId(createWorkLogDto.user_id))
       return { message: `Id: ${createWorkLogDto.user_id} không đúng định dạng.`, statusCode: 400 };
-
+    const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();
+    const dt = this.parseDate(createWorkLogDto.start_time ?? createWorkLogDto.start_time, TZ)
     try {
       // check user
       const user = await this.userModel.findOne({ _id: createWorkLogDto.user_id });
       if(!user)
         return { message: "Không tìm thấy tài khoản nào hiện đang được đăng nhập. Xin hãy đăng nhập lại!", statusCode: 400 };
 
-      const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();
-      
-      const dt = this.parseDate(createWorkLogDto.start_time ?? createWorkLogDto.start_time, TZ)
-      const dayKey = dt.toFormat('yyyy-LL-dd');
-      const workLog = await this.workLogModel.create({...createWorkLogDto, dayKey});
+
+      // --- Chuyển start_time & end_time từ local sang UTC
+      const start = DateTime.fromISO(createWorkLogDto.start_time, { zone: TZ });
+      const end = DateTime.fromISO(createWorkLogDto.end_time, { zone: TZ });
+
+      const dayKey = start.setZone(TZ).toFormat('yyyy-LL-dd');
+
+      const workLog = await this.workLogModel.create({
+        ...createWorkLogDto,
+        start_time: start.toJSDate(),
+        end_time: end.toJSDate(),
+        dayKey
+      });
       return {
         message: `Tạo giờ làm cho ngày ${dt.toFormat('dd/MM/yyyy')} thành công.`,
         statusCode: 200,
@@ -79,7 +96,7 @@ export class WorkLogsService {
     } catch (error) {
       if (error?.code === 11000) {
         return {
-          message: "Bạn đã tạo giờ làm cho hôm nay rồi.",
+          message: `Bạn đã tạo giờ làm cho ngày ${dt.toFormat('dd/MM/yyyy')} rồi.`,
           statusCode: 400,
         };
       }
@@ -165,7 +182,7 @@ export class WorkLogsService {
 
       const skip = (current - 1) * pageSize;
       
-      const [totalItems, results, totalsAgg] = await Promise.all([
+      const [totalItems, resultsRaw, totalsAgg] = await Promise.all([
         this.workLogModel.countDocuments(where),
         this.workLogModel
           .find(where)
@@ -227,6 +244,15 @@ export class WorkLogsService {
 
       const total_salary =
         (totals.total_salary_regular ?? 0) + (totals.total_salary_overtime ?? 0);
+      let results = resultsRaw.map((item: any) => {
+        if (item.start_time) {
+          item.start_time = dayjs(item.start_time).tz('Asia/Tokyo').format();
+        }
+        if (item.end_time) {
+          item.end_time = dayjs(item.end_time).tz('Asia/Tokyo').format();
+        }
+        return item;
+      });
 
       return {
         message: 'Lấy thông tin giờ làm thành công',
@@ -253,9 +279,9 @@ export class WorkLogsService {
 
   //#region Update
   toYMD(d: Date) {
-    const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(d.getUTCDate()).padStart(2, '0');
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
 
