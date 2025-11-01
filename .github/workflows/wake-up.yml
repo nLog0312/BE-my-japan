@@ -9,16 +9,22 @@ jobs:
   wake_up:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout latest code
+      - name: 🕐 Start workflow
+        run: echo "🚀 Workflow started at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      - name: 🧩 Checkout latest code
         uses: actions/checkout@v4
 
-      - name: Wake up Render app before midnight
+      - name: 🌐 Wake up Render app before midnight job
         run: |
-          echo "Pinging Render app to wake it up before midnight..."
+          echo "🔔 Sending ping to Render app to keep it awake before midnight..."
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/api/v1/auth/health)
           if [ "$RESPONSE" -eq 200 ]; then
-            echo "✅ App responded with 200 OK"
+            echo "✅ Render app responded with 200 OK"
           else
-            echo "⚠️ App did not respond (HTTP $RESPONSE)"
+            echo "⚠️ Render app did not respond (HTTP $RESPONSE)"
             exit 1
           fi
+
+      - name: 🕓 Finish workflow
+        run: echo "🎉 Workflow completed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
