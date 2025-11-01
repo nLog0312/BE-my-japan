@@ -11,7 +11,7 @@ jobs:
       - name: Wake up Render app before midnight job
         run: |
           echo "Pinging Render app to wake it up before midnight..."
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/health)
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/api/v1/auth/health)
           if [ "$RESPONSE" -eq 200 ]; then
             echo "✅ App responded with 200 OK"
           else
