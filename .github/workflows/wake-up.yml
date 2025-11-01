@@ -39,13 +39,14 @@ jobs:
           ${{ env.STATUS_MSG }}
           Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
+          AUTH_USER=$(echo -n "${{ secrets.GMAIL_USER }}" | base64)
+          AUTH_PASS=$(echo -n "${{ secrets.GMAIL_PASS }}" | base64)
+
           {
-            echo "EHLO smtp.gmail.com"
+            echo "EHLO localhost"
             echo "AUTH LOGIN"
-            echo -n "${{ secrets.GMAIL_USER }}" | base64
-            echo
-            echo -n "${{ secrets.GMAIL_PASS }}" | base64
-            echo
+            echo "$AUTH_USER"
+            echo "$AUTH_PASS"
             echo "MAIL FROM:<${{ secrets.GMAIL_USER }}>"
             echo "RCPT TO:<${{ secrets.GMAIL_TO }}>"
             echo "DATA"
@@ -56,4 +57,4 @@ jobs:
             echo "$BODY"
             echo "."
             echo "QUIT"
-          } | openssl s_client -crlf -quiet -connect smtp.gmail.com:465 -ign_eof
+          } | nc -v -i 1 smtp.gmail.com 587
