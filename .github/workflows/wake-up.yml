@@ -3,6 +3,7 @@ name: Wake Up Render App
 on:
   schedule:
     - cron: "55 14 * * *"
+  workflow_dispatch:
 
 jobs:
   wake_up:
@@ -10,11 +11,20 @@ jobs:
     steps:
       - name: Wake up Render app before midnight job
         run: |
-          echo "Pinging Render app to wake it up before midnight..."
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/health)
+          echo "🌐 Pinging Render app to wake it up before midnight..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://my-japan.onrender.com/api/v1/auth/health)
           if [ "$RESPONSE" -eq 200 ]; then
-            echo "✅ App responded with 200 OK"
+            STATUS_MSG="✅ Render app responded with 200 OK"
           else
-            echo "⚠️ App did not respond (HTTP $RESPONSE)"
-            exit 1
+            STATUS_MSG="⚠️ Render app did not respond (HTTP $RESPONSE)"
           fi
+          echo "$STATUS_MSG"
+          echo "STATUS_MSG=$STATUS_MSG" >> $GITHUB_ENV
+
+      - name: Send Telegram notification
+        if: always()
+        run: |
+          echo "📨 Sending Telegram notification..."
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=Wake Up Render App:%0A${{ env.STATUS_MSG }}%0ATime: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
