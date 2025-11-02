@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, Query, HttpCode } from '@nestjs/common';
 import { MonthlySheetsService } from './monthly.sheets.service';
 import { CreateMonthlySheetDto } from './dto/create-monthly.sheet.dto';
 import { UpdateMonthlySheetDto } from './dto/update-monthly.sheet.dto';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { ResponseDto } from '@/helpers/util';
 import { MonthSheetQueryDto } from './dto/monthsheet.dto';
 
@@ -11,20 +11,24 @@ export class MonthlySheetsController {
   constructor(private readonly monthlySheetsService: MonthlySheetsService) {}
 
   @Post()
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
   async create(@Body() createMonthlySheetDto: CreateMonthlySheetDto): Promise<ResponseDto> {
     return await this.monthlySheetsService.create(createMonthlySheetDto);
   }
 
-  @Get('get-all')
+  @Post('get-all')
+  @HttpCode(200)
   @ApiOkResponse({ type: ResponseDto })
-  findAll(@Query(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  })) query: MonthSheetQueryDto,
+  @ApiBody({ type: MonthSheetQueryDto })
+  findAll(
+    @Body(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    })) body: MonthSheetQueryDto,
   ) {
-    return this.monthlySheetsService.findAll(query, +query.current, +query.pageSize);
+    return this.monthlySheetsService.findAll(body, +body.current, +body.pageSize);
   }
 
   @Get('get-one/:id')

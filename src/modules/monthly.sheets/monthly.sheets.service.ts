@@ -3,7 +3,7 @@ import { CreateMonthlySheetDto } from './dto/create-monthly.sheet.dto';
 import { UpdateMonthlySheetDto } from './dto/update-monthly.sheet.dto';
 import { MonthlySheet, MonthlySheetDocument } from './schemas/monthly.sheet.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { dayRangeISO, fromToISO, monthRangeISO, ResponseDto, yearRangeISO } from '@/helpers/util';
 import aqp from 'api-query-params';
@@ -50,7 +50,8 @@ export class MonthlySheetsService {
   // from=2025-10-01&to=2025-10-18
   async findAll(rawQuery, current: number, pageSize: number): Promise<ResponseDto> {
     try {
-      const { filter, sort } = aqp(rawQuery);
+      let { filter, sort } = aqp(rawQuery);
+      if (!sort) sort = { entry_date: -1 };
   
       const { day, month, year, from, to } = (rawQuery || {}) as {
         day?: string; month?: string; year?: string; from?: string; to?: string;
@@ -80,23 +81,76 @@ export class MonthlySheetsService {
       if (dkRange && day) {
         where.entry_date = { $gte: dkRange.start, $lt: dkRange.end };
       }
+      if (where.user_id && typeof where.user_id === 'string') {
+        where.user_id = new Types.ObjectId(where.user_id);
+      }
   
-      const totalItems = await this.monthSheetModel.countDocuments(where);
-      const totalPages = Math.ceil(totalItems / pageSize);
       const skip = (current - 1) * pageSize;
-  
-      const results = await this.monthSheetModel
-        .find(where)
-        .limit(pageSize)
-        .skip(skip)
-        .select('-updatedAt -__v')
-        .sort(sort as any)
-        .lean();
+      
+      const [totalItems, results, totalsAgg] = await Promise.all([
+        this.monthSheetModel.countDocuments(where),
+        this.monthSheetModel
+          .find(where)
+          .limit(pageSize)
+          .skip(skip)
+          .select('-user_id -updatedAt -createdAt -__v')
+          .sort(sort as any)
+          .lean(),
+        this.monthSheetModel.aggregate([
+          { $match: where },
+          {
+            $project: {
+              amount: { $toDouble: { $ifNull: ['$amount', 0] } },
+              kind: { $ifNull: ['$kind', false] }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total_amount_income: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$kind', true] },
+                    '$amount',
+                    0
+                  ]
+                }
+              },
+              total_amount_expense: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$kind', false] },
+                    '$amount',
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          { $project: { _id: 0 } }
+        ])
+      ]);
+
+      const total_pages = Math.ceil(totalItems / pageSize);
+
+      const totals =
+        (Array.isArray(totalsAgg) && totalsAgg.length > 0 && totalsAgg[0]) || {
+          total_amount_income: 0,
+          total_amount_expense: 0,
+        };
+
+      const total_amount = (totals.total_amount_income ?? 0) - (totals.total_amount_expense ?? 0);
   
       return {
         message: 'Lấy thông tin thu/chi thành công.',
         statusCode: 200,
-        data: { results, totalPages },
+        data: {
+          results,
+          total_pages,
+          total_amount: total_amount ?? 0,
+          total_amount_income: totals.total_amount_income ?? 0,
+          total_amount_expense: totals.total_amount_expense ?? 0,
+        },
       };
     } catch (error) {
       return { message: error.message || 'Internal error', statusCode: 400 };

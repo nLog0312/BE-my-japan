@@ -199,7 +199,6 @@ export class WorkLogsService {
               regular_hours: { $toDouble: { $ifNull: ['$regular_hours', 0] } },
               overtime_hours: { $toDouble: { $ifNull: ['$overtime_hours', 0] } },
               overtime_multiplier: { $toDouble: { $ifNull: ['$overtime_multiplier', 1.25] } },
-              // nếu thiếu hoặc null thì fallback về false
               is_overtime: {
                 $cond: [
                   { $eq: ['$is_overtime', true] },
