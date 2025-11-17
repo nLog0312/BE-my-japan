@@ -81,6 +81,27 @@ export class WorkLogsService {
       const start = DateTime.fromISO(createWorkLogDto.start_time, { zone: TZ });
       const end = DateTime.fromISO(createWorkLogDto.end_time, { zone: TZ });
 
+      if (!start.isValid || !end.isValid) {
+        return { message: "Thời gian không hợp lệ.", statusCode: 400 };
+      }
+
+      // Nếu giờ bắt đầu > giờ kết thúc → phải coi là sang ngày hôm sau
+      if (start.toMillis() >= end.toMillis()) {
+        // Tự động +1 ngày cho end_time
+        const adjustedEnd = end.plus({ days: 1 });
+
+        // Nhưng kiểm tra xem user gửi ngày sai không
+        if (adjustedEnd.toMillis() <= start.toMillis()) {
+          return { 
+            message: "Giờ kết thúc phải lớn hơn giờ bắt đầu.", 
+            statusCode: 400 
+          };
+        }
+
+        // cập nhật end_time
+        createWorkLogDto.end_time = adjustedEnd.toISO();
+      }
+
       const dayKey = start.setZone(TZ).toFormat('yyyy-LL-dd');
 
       const workLog = await this.workLogModel.create({
@@ -112,32 +133,50 @@ export class WorkLogsService {
     if (todayCheck === 0 || todayCheck === 6) {
       return;
     }
+
     const users = await this.userModel.find();
     let createWorkLogDto: any = {
       break_minutes: 60,
       regular_hours: 8
-    }
+    };
 
-    const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();;
+    const TZ = (this.configService.get<string>('TZ') ?? 'Asia/Tokyo').trim();
     const today = DateTime.now().setZone(TZ).startOf('day');
-    const dt = this.parseDate(today.toISO(), TZ)
+    const dt = this.parseDate(today.toISO(), TZ);
     const dayKey = dt.toFormat('yyyy-LL-dd');
+
     for (const user of users) {
       if (user.setup_worklog.auto) {
         const [startHour, startMinute] = (user.setup_worklog?.start_time ?? '7:00').split(':').map(Number);
         const [endHour, endMinute] = (user.setup_worklog?.end_time ?? '16:00').split(':').map(Number);
-  
+
+        // --- tạo start_time ---
+        const start = today.set({ hour: startHour, minute: startMinute });
+
+        // --- xử lý end_time qua đêm ---
+        let end = today.set({ hour: endHour, minute: endMinute });
+
+        // Nếu giờ start > giờ end => ca qua đêm → end phải là ngày hôm sau
+        if (startHour > endHour || (startHour === endHour && startMinute > endMinute)) {
+          end = end.plus({ days: 1 }); // +1 ngày
+          createWorkLogDto.hourly_rate =
+            (user.setup_worklog?.hourly_rate ?? 1300) *
+            (user.setup_worklog?.overtime_multiplier ?? 1.25);
+
+        }
+        else
+          createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
+
         createWorkLogDto.user_id = user._id;
-        createWorkLogDto.start_time = today.set({ hour: startHour, minute: startMinute }).toISO();
-        createWorkLogDto.end_time = today.set({ hour: endHour, minute: endMinute }).toISO();
-  
-        createWorkLogDto.hourly_rate = user.setup_worklog?.hourly_rate ?? 1300;
+        createWorkLogDto.start_time = start.toISO();
+        createWorkLogDto.end_time = end.toISO();
         createWorkLogDto.dayKey = dayKey;
-        
-        const workLog = await this.workLogModel.create({...createWorkLogDto});
+
+        await this.workLogModel.create({ ...createWorkLogDto });
       }
     }
   }
+
 
   // day=2025-10-18
   // month=2025-10
@@ -387,8 +426,22 @@ export class WorkLogsService {
           return { message: 'Thời gian bắt đầu/kết thúc phải cùng ngày với bản ghi.', statusCode: 400 };
         }
   
+        // Nếu cùng ngày mà giờ start >= giờ end → báo lỗi
         if (finalStart.getTime() >= finalEnd.getTime()) {
-          return { message: 'Thời gian bắt đầu phải nhỏ hơn kết thúc', statusCode: 400 };
+
+          // Giờ start > giờ end → có thể là qua ngày → ta cho phép end +1 ngày
+          const tmpEnd = new Date(finalEnd.getTime());
+          tmpEnd.setDate(tmpEnd.getDate() + 1);
+
+          if (tmpEnd.getTime() <= finalStart.getTime()) {
+            return {
+              message: 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu.',
+              statusCode: 400
+            };
+          }
+
+          // OK: Chấp nhận làm qua đêm → end_time = end + 1 ngày
+          patch.end_time = tmpEnd;
         }
       }
 
